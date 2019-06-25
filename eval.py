@@ -7,12 +7,12 @@ import torchvision.transforms as transforms
 import pandas as pd
 import os
 
-from siamese_net import SiameseNet, ContrastDataset, cal_distance
+from nets.siamese_net import SiameseNet, ContrastDataset, cal_distance
 from config import config
-from utils import imshow
+from utils.utils import imshow
 
 # test
-test_set = ImageFolder(root=config["test_set_dir"])
+test_set = ImageFolder(root=config["test_set_root"])
 transform = transforms.Compose([transforms.Resize((90, 90)),
                                 transforms.ToTensor()])
 

@@ -7,11 +7,11 @@ from PIL import Image
 import numpy as np
 import random
 
-import res_net
+import nets.res_net as res_net
 
 class SiameseNet(nn.Module):
 
-    def __init__(self, dim_embedding, is_rgb=True):
+    def __init__(self, dim_embedding, is_rgb=False):
         super(SiameseNet, self).__init__()
 
         # learnable parameters
@@ -92,6 +92,7 @@ class ContrastDataset(Dataset):
     def __len__(self):
         return len(self.img_folder_dataset)
 
+
 class ContrastLoss(nn.Module):
     """Contrastive loss function
 
@@ -119,7 +120,7 @@ def cal_distance(embedding1, embedding2):
 
 if __name__ == "__main__":
 
-    siamese_net = SiameseNet()
+    siamese_net = SiameseNet(10)
     help(siamese_net)
 
     with open("./siamese_net_structure.txt", "w") as fw:

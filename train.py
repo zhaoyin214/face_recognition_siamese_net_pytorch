@@ -17,6 +17,7 @@ import pickle
 import time
 import copy
 from tqdm import tqdm
+import os
 
 
 # train
@@ -101,9 +102,9 @@ def train_model(model, data_loaders, criterion, optimizer, scheduler, num_epochs
 
             # early stopping
             if early_stopping_patience is not None:
-                if phase == "val" and epoch_loss < best_loss:
+                if phase == "val" and epoch_loss >= best_loss:
                     early_stopping_cnt += 1
-                elif phase == "val" and epoch_loss >= best_loss:
+                elif phase == "val" and epoch_loss < best_loss:
                     early_stopping_cnt = 0
                 else:
                     pass
@@ -116,9 +117,9 @@ def train_model(model, data_loaders, criterion, optimizer, scheduler, num_epochs
 
             # reduce lr on plateau
             if reduce_lr_on_plateau is not None:
-                if phase == "val" and epoch_loss < best_loss:
+                if phase == "val" and epoch_loss >= best_loss:
                     reduce_lr_on_plateau_cnt += 1
-                elif phase == "val" and epoch_loss >= best_loss:
+                elif phase == "val" and epoch_loss < best_loss:
                     reduce_lr_on_plateau_cnt = 0
                 else:
                     pass
@@ -130,8 +131,8 @@ def train_model(model, data_loaders, criterion, optimizer, scheduler, num_epochs
                         param_group["lr"] *= reduce_lr_on_plateau["factor"]
                     print("Learning Rate: {}".format(param_group["lr"]))
 
-            # best save
-            if phase == "val" and epoch_loss > best_loss:
+            # best save according to val_loss
+            if phase == "val" and epoch_loss < best_loss:
                 print("Best Save...")
                 best_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
@@ -159,7 +160,7 @@ if __name__ == "__main__":
 
     # dataset
     image_datasets = {x: ImageFolder(root=config[x + "_set_root"],
-                                    transform=None)
+                                     transform=None)
                     for x in ["train", "val"]}
 
     dataset_size = {x: len(image_datasets[x]) for x in ["train", "val"]}
@@ -206,9 +207,9 @@ if __name__ == "__main__":
 
     # data loader
     data_loaders = {x: torch.utils.data.DataLoader(dataset=contrast_datasets[x],
-                                                batch_size=config[x + "_batch_size"],
-                                                shuffle=True,
-                                                num_workers=0)
+                                                   batch_size=config[x + "_batch_size"],
+                                                   shuffle=True,
+                                                   num_workers=0)
                     for x in ["train", "val"]}
     dataset_size = {x: len(image_datasets[x]) for x in ["train", "val"]}
     class_names = image_datasets["train"].classes
@@ -220,7 +221,9 @@ if __name__ == "__main__":
 
     # network
     net = SiameseNet(dim_embedding=config["dim_embedding"],
-                    is_rgb=config["is_rgb"])
+                     is_rgb=config["is_rgb"])
+    if os.path.isfile("./output/best_model.pth"):
+        net.load_state_dict(torch.load("./output/best_model.pth"))
     net.to(device)
 
     # loss
@@ -231,13 +234,13 @@ if __name__ == "__main__":
     exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
 
     net, history = train_model(model=net,
-                            data_loaders=data_loaders,
-                            criterion=criterion,
-                            optimizer=optimizer,
-                            scheduler=exp_lr_scheduler,
-                            num_epochs=config["train_epochs"],
-                            early_stopping_patience=config["early_stopping_patience"],
-                            reduce_lr_on_plateau = config["reduce_lr_on_plateau"])
+                               data_loaders=data_loaders,
+                               criterion=criterion,
+                               optimizer=optimizer,
+                               scheduler=exp_lr_scheduler,
+                               num_epochs=config["train_epochs"],
+                               early_stopping_patience=config["early_stopping_patience"],
+                               reduce_lr_on_plateau = config["reduce_lr_on_plateau"])
 
     with open("./output/history.pickle", "wb") as fw:
         pickle.dump(history, fw)

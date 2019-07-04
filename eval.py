@@ -8,11 +8,11 @@ import pandas as pd
 import os
 
 from nets.siamese_net import SiameseNet, ContrastDataset, cal_distance
-from config import config
+from configs.config import config
 from utils.utils import imshow
 
 # test
-test_set = ImageFolder(root=config["test_set_root"])
+test_set = ImageFolder(root=config["val_set_root"])
 transform = transforms.Compose([transforms.Resize((90, 90)),
                                 transforms.ToTensor()])
 
@@ -26,7 +26,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # network
 net = SiameseNet(dim_embedding=config["dim_embedding"],
                  is_rgb=config["is_rgb"])
-net.load_state_dict(torch.load("best.siamese.ph"))
+net.load_state_dict(torch.load("./output/best_model.pth"))
 net.to(device)
 net.eval()
 

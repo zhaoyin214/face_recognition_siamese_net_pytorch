@@ -17,6 +17,7 @@ import pickle
 import time
 import copy
 from tqdm import tqdm
+import sys
 import os
 
 
@@ -33,7 +34,7 @@ def train_model(model, data_loaders, criterion, optimizer, scheduler, num_epochs
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_loss = 0
+    best_loss = sys.float_info.max
 
     if early_stopping_patience is not None:
         early_stopping_cnt = 0
